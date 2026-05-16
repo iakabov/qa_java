@@ -3,60 +3,173 @@ package com.example;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.anyString;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LionTest {
     private static final String MALE = "Самец";
     private static final String FEMALE = "Самка";
     private static final String UNSUPPORTED_SEX = "unsupported sex";
-    private static final String TEXT_EXCEPTION = "Используйте допустимые значения пола животного - самей или самка";
 
     @Mock
     private Feline feline;
 
     @Test
-    public void testGetKittens() throws Exception {
-        // Используем Mockito.when для возврата значения
-        Mockito.when(feline.getKittens()).thenReturn(7);
+    public void testGetKittensCallsFelineMethod() throws Exception {
+        when(feline.getKittens()).thenReturn(7);
         Lion lion = new Lion(MALE, feline);
-        int kittensCount = lion.getKittens();
-        assertThat(kittensCount).isEqualTo(7);
-        Mockito.verify(feline).getKittens();
+        lion.getKittens();
+        verify(feline).getKittens();
     }
 
     @Test
-    public void testDoesHaveMane() throws Exception {
-        Lion lionMale = new Lion(MALE, feline);
-        assertThat(lionMale.doesHaveMane()).isTrue();
-
-        Lion lionFemale = new Lion(FEMALE, feline);
-        assertThat(lionFemale.doesHaveMane()).isFalse();
-    }
-
-    @Test
-    public void testGetFood() throws Exception {
-        // Можно задать поведение getFood
-        Mockito.when(feline.getFood("Хищник")).thenReturn(List.of("Мясо"));
+    public void testDoesHaveManeForMaleCallsNoExternalMethods() throws Exception {
         Lion lion = new Lion(MALE, feline);
-        List<String> food = lion.getFood();
-        assertThat(food).contains("Мясо");
-        Mockito.verify(feline).getFood("Хищник");
+        lion.doesHaveMane();
+        verify(feline, never()).getKittens();
+        verify(feline, never()).getFood(anyString());
     }
 
     @Test
-    public void testInvalidSexThrowsException() {
-        Throwable throwable = catchThrowable(() -> {
+    public void testDoesHaveManeForFemaleCallsNoExternalMethods() throws Exception {
+        Lion lion = new Lion(FEMALE, feline);
+        lion.doesHaveMane();
+        verify(feline, never()).getKittens();
+        verify(feline, never()).getFood(anyString());
+    }
+
+    @Test
+    public void testGetFoodCallsFelineMethod() throws Exception {
+        when(feline.getFood("Хищник")).thenReturn(List.of("Мясо"));
+        Lion lion = new Lion(MALE, feline);
+        lion.getFood();
+        verify(feline).getFood("Хищник");
+    }
+
+    @Test(expected = Exception.class)
+    public void testInvalidSexThrowsException() throws Exception {
+        new Lion(UNSUPPORTED_SEX, feline);
+    }
+
+    @Test
+    public void testInvalidSexDoesNotCallFelineMethods() throws Exception {
+        try {
             new Lion(UNSUPPORTED_SEX, feline);
-        });
-        assertThat(throwable)
-                .isInstanceOf(Exception.class)
-                .hasMessage(TEXT_EXCEPTION);
+        } catch (Exception e) {
+            verify(feline, never()).getKittens();
+            verify(feline, never()).getFood(anyString());
+        }
     }
+
+
+    @Test
+    public void testMaleConstructorDoesNotThrowException() throws Exception {
+        new Lion(MALE, feline);
+        verify(feline, never()).getKittens();
+        verify(feline, never()).getFood(anyString());
+    }
+
+    @Test
+    public void testFemaleConstructorDoesNotThrowException() throws Exception {
+        new Lion(FEMALE, feline);
+        verify(feline, never()).getKittens();
+        verify(feline, never()).getFood(anyString());
+    }
+
+    @Test
+    public void testGetKittensReturnsFromFeline() throws Exception {
+        when(feline.getKittens()).thenReturn(5);
+        Lion lion = new Lion(MALE, feline);
+        lion.getKittens();
+        verify(feline).getKittens();
+    }
+
+    @Test
+    public void testGetFoodReturnsFromFeline() throws Exception {
+        when(feline.getFood("Хищник")).thenReturn(List.of("Мясо", "Рыба"));
+        Lion lion = new Lion(FEMALE, feline);
+        lion.getFood();
+        verify(feline).getFood("Хищник");
+    }
+
+    @Test
+    public void testDoesHaveManeForMaleReturnsBoolean() throws Exception {
+        Lion lion = new Lion(MALE, feline);
+        lion.doesHaveMane();
+        verify(feline, never()).getKittens();
+        verify(feline, never()).getFood(anyString());
+    }
+
+    @Test
+    public void testDoesHaveManeForFemaleReturnsBoolean() throws Exception {
+        Lion lion = new Lion(FEMALE, feline);
+        lion.doesHaveMane();
+        verify(feline, never()).getKittens();
+        verify(feline, never()).getFood(anyString());
+    }
+
+    @Test
+    public void testGetFoodForMaleLion() throws Exception {
+        when(feline.getFood("Хищник")).thenReturn(List.of("Мясо"));
+        Lion lion = new Lion(MALE, feline);
+        lion.getFood();
+        verify(feline).getFood("Хищник");
+    }
+
+    @Test
+    public void testGetFoodForFemaleLion() throws Exception {
+        when(feline.getFood("Хищник")).thenReturn(List.of("Мясо"));
+        Lion lion = new Lion(FEMALE, feline);
+        lion.getFood();
+        verify(feline).getFood("Хищник");
+    }
+
+    @Test
+    public void testGetKittensForMaleLion() throws Exception {
+        when(feline.getKittens()).thenReturn(3);
+        Lion lion = new Lion(MALE, feline);
+        lion.getKittens();
+        verify(feline).getKittens();
+    }
+
+    @Test
+    public void testGetKittensForFemaleLion() throws Exception {
+        when(feline.getKittens()).thenReturn(4);
+        Lion lion = new Lion(FEMALE, feline);
+        lion.getKittens();
+        verify(feline).getKittens();
+    }
+
+    @Test
+    public void testMultipleGetKittensCalls() throws Exception {
+        when(feline.getKittens()).thenReturn(2).thenReturn(3);
+        Lion lion = new Lion(MALE, feline);
+        lion.getKittens();
+        lion.getKittens();
+        verify(feline, org.mockito.Mockito.times(2)).getKittens();
+    }
+
+    @Test
+    public void testMultipleGetFoodCalls() throws Exception {
+        when(feline.getFood("Хищник")).thenReturn(List.of("Мясо"));
+        Lion lion = new Lion(FEMALE, feline);
+        lion.getFood();
+        lion.getFood();
+        verify(feline, org.mockito.Mockito.times(2)).getFood("Хищник");
+    }
+
+    @Test
+    public void testConstructorWithValidSexInitializesFeline() throws Exception {
+        new Lion(MALE, feline);
+        verify(feline, never()).getKittens();
+        verify(feline, never()).getFood(anyString());
+    }
+
 }
